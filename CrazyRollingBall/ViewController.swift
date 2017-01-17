@@ -10,6 +10,15 @@ import UIKit
 
 class ViewController: UIViewController {
     
+    enum collisionMargin {
+        case Top
+        case Left
+        case Bot
+        case Right
+    }
+    
+    var collision = collisionMargin.Top
+    
     var ball: UIImageView = UIImageView()
     let ballRadius: CGFloat = 32.0
     var angle: CGFloat =  1 * CGFloat(M_PI/180)
@@ -24,6 +33,7 @@ class ViewController: UIViewController {
         addBall()
         oldCenterBall = ball.center
         timer = Timer.scheduledTimer(timeInterval: 0.000001, target: self, selector: #selector(ViewController.rollBallCenterToRight), userInfo: nil, repeats: true)
+        
     }
     
     func addBall() {
@@ -53,13 +63,13 @@ class ViewController: UIViewController {
     
     func rollBallCheck() {
         if ball.center.x >= view.bounds.size.width - ballRadius {
-            temp = 1
+            collision = .Right
         } else if ball.center.y <= ballRadius {
-            temp = 2
+            collision = .Top
         } else if ball.center.x <= ballRadius {
-            temp = 3
+            collision = .Left
         } else if ball.center.y >= view.bounds.size.height - ballRadius {
-            temp = 4
+            collision = .Bot
         }
         stopTimerCheck()
         timerRollBall = Timer.scheduledTimer(timeInterval: 0.000001, target: self, selector: #selector(ViewController.rollBall), userInfo: nil, repeats: true)
@@ -75,7 +85,8 @@ class ViewController: UIViewController {
         let oldCenterX = oldCenterBall.x
         let oldCenterY = oldCenterBall.y
         
-        if temp == 1 {
+        switch collision {
+        case .Right:
             testAngle = -angle
             if centerY > oldCenterY {
                 centerWidth = -centerWidth
@@ -83,16 +94,16 @@ class ViewController: UIViewController {
                 centerWidth = -centerWidth
                 centerHeight = -centerHeight
             }
-        } else if temp == 2 {
+        case .Top:
             if centerX < oldCenterX {
                 testAngle = -angle
                 centerWidth = -centerWidth
             }
-        } else if temp == 3 {
+        case .Left:
             if centerY <= oldCenterY {
                 centerHeight = -centerHeight
             }
-        } else if temp == 4 {
+        case .Bot:
             if centerX > oldCenterX {
                 centerHeight = -centerHeight
             } else {
