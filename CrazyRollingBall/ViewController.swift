@@ -12,20 +12,18 @@ class ViewController: UIViewController {
     
     var ball: UIImageView = UIImageView()
     let ballRadius: CGFloat = 32.0
-    let angle: CGFloat =  1 * CGFloat(M_PI/180)
+    var angle: CGFloat =  1 * CGFloat(M_PI/180)
     var oldCenterBall: CGPoint! = nil
     var newCenterBall: CGPoint! = nil
     var timer: Timer = Timer()
-    var timer1: Timer = Timer()
-    var timer2: Timer = Timer()
-    var timer3: Timer = Timer()
-    var timer4: Timer = Timer()
-    var timer5: Timer = Timer()
+    var timerCheck: Timer = Timer()
+    var timerRollBall: Timer = Timer()
+    var temp = 0
     override func viewDidLoad() {
         super.viewDidLoad()
         addBall()
         oldCenterBall = ball.center
-        timer = Timer.scheduledTimer(timeInterval: 0.000001, target: self, selector: #selector(ViewController.rollBall), userInfo: nil, repeats: true)
+        timer = Timer.scheduledTimer(timeInterval: 0.000001, target: self, selector: #selector(ViewController.rollBallCenterToRight), userInfo: nil, repeats: true)
     }
     
     func addBall() {
@@ -35,102 +33,85 @@ class ViewController: UIViewController {
         view.addSubview(ball)
     }
     
-    func startTimer1() {
-        timer1 = Timer.scheduledTimer(timeInterval: 0.000001, target: self, selector: #selector(ViewController.rollBall1), userInfo: nil, repeats: true)
+    func rollBallCenterToRight() {
+        ball.transform = ball.transform.rotated(by: angle)
+        ball.center = CGPoint(x: ball.center.x + ballRadius*angle, y: ball.center.y + ballRadius*angle)
+        
+        if ball.center.x >= view.bounds.size.width - ballRadius {
+            timer.invalidate()
+            startTimerCheck()
+        }
     }
     
-    func stopTimer1() {
-        timer1.invalidate()
+    func startTimerCheck() {
+        timerCheck = Timer.scheduledTimer(timeInterval: 0.000001, target: self, selector: #selector(ViewController.rollBallCheck), userInfo: nil, repeats: true)
+    }
+    
+    func stopTimerCheck() {
+        timerCheck.invalidate()
+    }
+    
+    func rollBallCheck() {
+        if ball.center.x >= view.bounds.size.width - ballRadius {
+            temp = 1
+        } else if ball.center.y <= ballRadius {
+            temp = 2
+        } else if ball.center.x <= ballRadius {
+            temp = 3
+        } else if ball.center.y >= view.bounds.size.height - ballRadius {
+            temp = 4
+        }
+        stopTimerCheck()
+        timerRollBall = Timer.scheduledTimer(timeInterval: 0.000001, target: self, selector: #selector(ViewController.rollBall), userInfo: nil, repeats: true)
     }
     
     func rollBall() {
-        ball.transform = ball.transform.rotated(by: angle)
-        ball.center = CGPoint(x: ball.center.x + ballRadius*angle, y: ball.center.y + ballRadius*angle)
-        if ball.center.x >= view.bounds.size.width - ballRadius {
-            timer.invalidate()
-            startTimer1()
-        }
-    }
-    
-    func rollBall1() {
-        if ball.center.x >= view.bounds.size.width - ballRadius {
-            stopTimer1()
-            timer2 = Timer.scheduledTimer(timeInterval: 0.000001, target: self, selector: #selector(ViewController.rollBall2), userInfo: nil, repeats: true)
-        } else if ball.center.y <= ballRadius {
-            stopTimer1()
-            timer3 = Timer.scheduledTimer(timeInterval: 0.000001, target: self, selector: #selector(ViewController.rollBall3), userInfo: nil, repeats: true)
-        } else if ball.center.x <= ballRadius {
-            stopTimer1()
-            timer4 = Timer.scheduledTimer(timeInterval: 0.000001, target: self, selector: #selector(ViewController.rollBall4), userInfo: nil, repeats: true)
-        } else if ball.center.y >= view.bounds.size.height - ballRadius {
-            stopTimer1()
-            timer5 = Timer.scheduledTimer(timeInterval: 0.000001, target: self, selector: #selector(ViewController.rollBall5), userInfo: nil, repeats: true)
-        }
-    }
-    
-    func rollBall2() {
-        ball.transform = ball.transform.rotated(by: -angle)
-        if ball.center.y > oldCenterBall.y {
-            oldCenterBall = ball.center
-            ball.center = CGPoint(x: ball.center.x - ballRadius*angle, y: ball.center.y + ballRadius*angle)
-        } else {
-            oldCenterBall = ball.center
-            ball.center = CGPoint(x: ball.center.x - ballRadius*angle, y: ball.center.y - ballRadius*angle)
-        }
-        if ball.center.y >= view.bounds.size.height - ballRadius || ball.center.y <= ballRadius || ball.center.x  <= ballRadius {
-            timer2.invalidate()
-            startTimer1()
-        }
-    }
-    
-    func rollBall3() {
-        if ball.center.x > oldCenterBall.x {
-            oldCenterBall = ball.center
-            ball.transform = ball.transform.rotated(by: angle)
-            ball.center = CGPoint(x: ball.center.x + ballRadius*angle, y: ball.center.y + ballRadius*angle)
-        } else {
-            oldCenterBall = ball.center
-            ball.transform = ball.transform.rotated(by: -angle)
-            ball.center = CGPoint(x: ball.center.x - ballRadius*angle, y: ball.center.y + ballRadius*angle)
+        
+        var centerWidth = ballRadius*angle
+        var centerHeight = ballRadius*angle
+        var testAngle = angle
+        let centerX = ball.center.x
+        let centerY = ball.center.y
+        let oldCenterX = oldCenterBall.x
+        let oldCenterY = oldCenterBall.y
+        
+        if temp == 1 {
+            testAngle = -angle
+            if centerY > oldCenterY {
+                centerWidth = -centerWidth
+            } else {
+                centerWidth = -centerWidth
+                centerHeight = -centerHeight
+            }
+        } else if temp == 2 {
+            if centerX < oldCenterX {
+                testAngle = -angle
+                centerWidth = -centerWidth
+            }
+        } else if temp == 3 {
+            if centerY <= oldCenterY {
+                centerHeight = -centerHeight
+            }
+        } else if temp == 4 {
+            if centerX > oldCenterX {
+                centerHeight = -centerHeight
+            } else {
+                testAngle = -angle
+                centerWidth = -centerWidth
+                centerHeight = -centerHeight
+            }
         }
         
-        if ball.center.x <= ballRadius || ball.center.x >= view.bounds.size.width - ballRadius || ball.center.y >= view.bounds.size.height - ballRadius {
-            timer3.invalidate()
-            startTimer1()
+        oldCenterBall = ball.center
+        
+        ball.transform = ball.transform.rotated(by: testAngle)
+        ball.center = CGPoint(x: ball.center.x + centerWidth, y: ball.center.y + centerHeight)
+
+        if ball.center.y >= view.bounds.size.height - ballRadius || ball.center.y <= ballRadius || ball.center.x  <= ballRadius || ball.center.x >= view.bounds.size.width - ballRadius {
+            timerRollBall.invalidate()
+            startTimerCheck()
         }
     }
     
-    func rollBall4() {
-        ball.transform = ball.transform.rotated(by: angle)
-        if ball.center.y > oldCenterBall.y {
-            oldCenterBall = ball.center
-            ball.center = CGPoint(x: ball.center.x + ballRadius*angle, y: ball.center.y + ballRadius*angle)
-        } else {
-            oldCenterBall = ball.center
-            ball.center = CGPoint(x: ball.center.x + ballRadius*angle, y: ball.center.y - ballRadius*angle)
-        }
-        
-        if ball.center.x >= view.frame.size.width - ballRadius || ball.center.y >= view.frame.size.height - ballRadius || ball.center.y <= ballRadius {
-            timer4.invalidate()
-            startTimer1()
-        }
-    }
-    
-    func rollBall5() {
-        if ball.center.x > oldCenterBall.x {
-            oldCenterBall = ball.center
-            ball.transform = ball.transform.rotated(by: angle)
-            ball.center = CGPoint(x: ball.center.x + ballRadius*angle, y: ball.center.y - ballRadius*angle)
-        } else {
-            oldCenterBall = ball.center
-            ball.transform = ball.transform.rotated(by: -angle)
-            ball.center = CGPoint(x: ball.center.x - ballRadius*angle, y: ball.center.y - ballRadius*angle)
-        }
-        
-        if ball.center.x <= ballRadius || ball.center.x >= view.bounds.size.width - ballRadius || ball.center.y <= ballRadius {
-            timer5.invalidate()
-            startTimer1()
-        }
-    }
     
 }
